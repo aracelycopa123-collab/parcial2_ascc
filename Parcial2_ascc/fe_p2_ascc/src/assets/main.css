@@ -1,0 +1,71 @@
+@import './base.css';
+
+/* Fondo simple: celeste pastel para toda la página */
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f0f8ff 0%, #eef8ff 100%);
+  color: #05293a;
+}
+
+/* Contenedor principal */
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-weight: normal;
+  position: relative;
+  z-index: 1;
+}
+
+/* Asegurar que el contenido sea legible */
+.card, .table, .dialog {
+  background-color: rgba(31, 79, 235, 0.98) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06);
+}
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-weight: normal;
+}
+
+a,
+.green {
+  text-decoration: none;
+  /* Azul pastel / celeste suave en lugar de verde chillante */
+  color: hsla(200, 100%, 80%, 1);
+  transition: 0.4s;
+  padding: 3px;
+}
+
+@media (hover: hover) {
+  a:hover {
+    /* Fondo suave al pasar el ratón */
+    background-color: hsla(200, 100%, 80%, 0.25);
+  }
+}
+
+/* Forzar un azul pastel en la barra de navegación primaria */
+.navbar.bg-primary {
+  background-color: #cfe9ff !important;
+}
+
+.navbar .nav-link {
+  color: #064a6b !important; /* texto ligeramente oscuro sobre azul pastel */
+}
+
+@media (min-width: 1024px) {
+  body {
+    display: flex;
+    place-items: center;
+  }
+
+  #app {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0 2rem;
+  }
+}

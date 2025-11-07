@@ -6,29 +6,18 @@ import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, type PropType } from 'vue'
 import { DatePicker } from 'primevue'
 import type { Programa } from '@/models/programa'
+import type { ProgramaForm } from '@/models/programa-form'
 import type { NivelAcademico } from '@/models/nivelAcademico'
 
 const ENDPOINT = 'programas'
-const props = defineProps({
-  mostrar: Boolean,
-  programa: {
-    type: Object as () => Programa,
-    default: () => ({
-      idNivelAcademico: 0,
-      nombre: '',
-      descripcion: '',
-      version: 0,
-      duracionMeses: 0,
-      costo: 0,
-      fechaInicio: new Date(),
-      estado: '',
-    }) as Programa,
-  },
-  modoEdicion: Boolean,
-})
+const props = defineProps<{
+  mostrar?: boolean;
+  programa: ProgramaForm;
+  modoEdicion?: boolean;
+}>()
 const emit = defineEmits(['guardar', 'close'])
 
 const nivelAcademico = ref<NivelAcademico[]>([])
@@ -42,8 +31,14 @@ const dialogVisible = computed({
 
 const titulo = computed(() => (props.modoEdicion ? 'Editar' : 'Crear') + ' Programa')
 
-const programa = ref<Programa>({ ...props.programa })
+const programa = ref<ProgramaForm>({ ...props.programa })
 const estado = ['En Planificación', 'En curso', 'Finalizado']
+const areasConocimiento = [
+  { label: 'Derecho', value: 'Derecho' },
+  { label: 'Ingeniería', value: 'Ingeniería' },
+  { label: 'Economía', value: 'Economía' },
+  { label: 'Salud', value: 'Salud' }
+]
 
 async function obtenerNivelAcademico() {
   nivelAcademico.value = await http.get('niveles-academicos').then((response) => response.data)
@@ -63,12 +58,11 @@ watch(
 
           programa.value = programaActualizado ? {
             ...programaActualizado,
+            id: programaActualizado.id,
             idNivelAcademico: programaActualizado.nivelAcademico?.id ?? 0,
             fechaInicio: new Date(programaActualizado.fechaInicio),
-            estado:
-              estado.find(
-                (e) => e.toLowerCase() === (programaActualizado.estado?.toLowerCase() ?? ''),
-              ) ?? '',
+            estado: programaActualizado.estado || '',
+            areaConocimiento: programaActualizado.areaConocimiento,
           } : props.programa
           console.log('Programa cargado para edición:', programa.value)
         } catch (error) {
@@ -77,6 +71,7 @@ watch(
         }
       } else {
         programa.value = {
+          id: 0,
           idNivelAcademico: 0,
           nombre: '',
           descripcion: '',
@@ -84,8 +79,10 @@ watch(
           duracionMeses: 0,
           costo: 0,
           fechaInicio: new Date(),
-          estado: '',
-        } as Programa
+          estado: 'activo',
+          areaConocimiento: null,
+          nivelAcademico: null
+        } as ProgramaForm
       }
     }
   },
@@ -93,6 +90,7 @@ watch(
 
 async function handleSave() {
   try {
+    // Nota: validación de campos la realiza el backend; previamente funcionaba sin validación cliente adicional
     // Asegurar que fechaInicio sea un objeto Date antes de llamar a toISOString
     let fechaISO = null
     if (programa.value.fechaInicio) {
@@ -119,6 +117,7 @@ async function handleSave() {
       costo: programa.value.costo,
       fechaInicio: fechaISO,
       estado: programa.value.estado,
+      areaConocimiento: programa.value.areaConocimiento,
     }
     console.log('Datos que envío:', body)
     try {
@@ -131,6 +130,7 @@ async function handleSave() {
       console.log('Respuesta del servidor al guardar:', response?.data)
       emit('guardar')
       programa.value = {
+        id: 0,
         idNivelAcademico: 0,
         nombre: '',
         descripcion: '',
@@ -138,8 +138,10 @@ async function handleSave() {
         duracionMeses: 0,
         costo: 0,
         fechaInicio: new Date(),
-        estado: '',
-      } as Programa
+        estado: 'activo',
+        areaConocimiento: null,
+        nivelAcademico: null
+      } as ProgramaForm
       dialogVisible.value = false
     } catch (err: any) {
       console.error('Error en la petición de guardado:', err, err?.response?.data, err?.response?.status)
@@ -183,6 +185,19 @@ async function handleSave() {
           v-model="programa.descripcion"
           class="flex-auto"
           autocomplete="off"
+        />
+      </div>
+      <div class="flex items-center gap-4 mb-4">
+        <label for="areaConocimiento" class="font-semibold w-3">Área de Conocimiento</label>
+        <Select
+          id="areaConocimiento"
+          v-model="programa.areaConocimiento"
+          :options="areasConocimiento"
+          optionValue="value"
+          optionLabel="label"
+          placeholder="Seleccionar área (opcional)"
+          class="flex-auto"
+          showClear
         />
       </div>
       <div class="flex items-center gap-4 mb-4">

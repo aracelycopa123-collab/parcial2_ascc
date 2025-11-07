@@ -3,7 +3,8 @@ import type { Programa } from '@/models/programa'
 import http from '@/plugins/axios'
 import { Dialog, InputGroup, InputGroupAddon, InputText } from 'primevue'
 import Button from 'primevue/button'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import Select from 'primevue/select'
 
 const ENDPOINT = 'programas'
 const programa = ref<Programa[]>([])
@@ -11,8 +12,16 @@ const emit = defineEmits(['edit'])
 const programaDelete = ref<Programa | null>(null)
 const mostrarConfirmDialog = ref<boolean>(false)
 const busqueda = ref<string>('')
+const areaSeleccionada = ref<string>('')
+const areasConocimiento = ref([
+  { label: 'Todos', value: '' },
+  { label: 'Derecho', value: 'Derecho' },
+  { label: 'Ingeniería', value: 'Ingeniería' },
+  { label: 'Economía', value: 'Economía' },
+  { label: 'Salud', value: 'Salud' }
+])
 
-async function obtenerLista() {
+async function obtenerLista(areaConocimiento?: string) {
   try {
     const response = await http.get(`${ENDPOINT}?_expand=nivelAcademico`)
     programa.value = response.data
@@ -39,7 +48,11 @@ const programasFiltrados = computed(() => {
         .toString()
         .toLowerCase()
         .includes(busqueda.value.toLowerCase()) ||
-      (programa.estado ?? '').toString().toLowerCase().includes(busqueda.value.toLowerCase()),
+      (programa.estado ?? '').toString().toLowerCase().includes(busqueda.value.toLowerCase()) ||
+      (programa.areaConocimiento ?? '')
+        .toString()
+        .toLowerCase()
+        .includes(busqueda.value.toLowerCase()),
   )
 })
 
@@ -58,6 +71,10 @@ async function eliminar() {
   obtenerLista()
   mostrarConfirmDialog.value = false
 }
+
+watch(areaSeleccionada, (newValue) => {
+  obtenerLista(newValue)
+})
 
 onMounted(() => {
   obtenerLista()
@@ -96,48 +113,89 @@ defineExpose({ obtenerLista })
 }
 
 .badge {
-  padding: 8px 12px;
+  padding: 4px 8px;
   border-radius: 4px;
   font-weight: 500;
+  font-size: 0.9em;
 }
 
 .table-responsive {
-  border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
   margin-top: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  padding: 12px 8px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px 8px;
+  vertical-align: middle;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table td.actions {
+  width: 100px;
+  white-space: nowrap;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.btn-group {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
 }
 </style>
 
 <template>
   <div>
-    <div class="search-container mb-3">
-      <div class="col-7 pl-0">
-        <InputGroup>
-          <InputGroupAddon><i class="pi pi-search"></i></InputGroupAddon>
-          <InputText
-            v-model="busqueda"
-            type="text"
-            class="form-control"
-            placeholder="Buscar por nombre, descripción, nivel académico o estado"
-          />
-        </InputGroup>
+      <div class="search-container mb-3">
+        <div class="col-7 pl-0">
+          <InputGroup>
+            <InputGroupAddon><i class="pi pi-search"></i></InputGroupAddon>
+            <InputText
+              v-model="busqueda"
+              type="text"
+              class="form-control"
+              placeholder="Buscar por nombre, descripción, nivel académico, área de conocimiento o estado"
+            />
+          </InputGroup>
+        </div>
       </div>
-    </div>
 
     <div class="table-responsive">
-      <table class="table table-hover table-bordered">
-        <thead class="table-primary">
+      <table class="table">
+        <thead>
           <tr>
             <th class="text-center" style="width: 60px">Nro.</th>
-            <th>Nivel Académico</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Versión</th>
-            <th>Duración</th>
-            <th>Costo</th>
-            <th>Fecha de Inicio</th>
-            <th>Estado</th>
-            <th class="text-center">Acciones</th>
+            <th style="width: 150px">Nivel Académico</th>
+            <th style="width: 200px">Nombre</th>
+            <th style="width: 250px">Descripción</th>
+            <th style="width: 150px">Área de Conocimiento</th>
+            <th style="width: 80px">Versión</th>
+            <th style="width: 100px">Duración</th>
+            <th style="width: 120px">Costo</th>
+            <th style="width: 150px">Fecha de Inicio</th>
+            <th style="width: 120px">Estado</th>
+            <th class="text-center" style="width: 100px">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -151,6 +209,12 @@ defineExpose({ obtenerLista })
             </td>
             <td>{{ programa.nombre }}</td>
             <td>{{ programa.descripcion }}</td>
+            <td>
+              <span v-if="programa.areaConocimiento" class="badge bg-success text-white">
+                {{ programa.areaConocimiento }}
+              </span>
+              <span v-else class="badge bg-secondary">No asignado</span>
+            </td>
             <td>{{ programa.version }}</td>
             <td>{{ programa.duracionMeses }} meses</td>
             <td>
@@ -171,24 +235,26 @@ defineExpose({ obtenerLista })
               }}
             </td>
             <td>{{ programa.estado }}</td>
-            <td class="text-center">
-              <Button
-                icon="pi pi-pencil"
-                aria-label="Editar"
-                text
-                @click="emitirEdicion(programa)"
-              />
-              <Button
-                icon="pi pi-trash"
-                aria-label="Eliminar"
-                severity="danger"
-                text
-                @click="mostrarEliminarConfirm(programa)"
-              />
+            <td class="text-center actions">
+              <div class="btn-group">
+                <Button
+                  icon="pi pi-pencil"
+                  aria-label="Editar"
+                  class="p-button-sm"
+                  @click="emitirEdicion(programa)"
+                />
+                <Button
+                  icon="pi pi-trash"
+                  aria-label="Eliminar"
+                  severity="danger"
+                  class="p-button-sm"
+                  @click="mostrarEliminarConfirm(programa)"
+                />
+              </div>
             </td>
           </tr>
           <tr v-if="programasFiltrados.length === 0">
-            <td colspan="10" class="text-center">No se encontraron resultados.</td>
+            <td colspan="11" class="text-center">No se encontraron resultados.</td>
           </tr>
         </tbody>
       </table>

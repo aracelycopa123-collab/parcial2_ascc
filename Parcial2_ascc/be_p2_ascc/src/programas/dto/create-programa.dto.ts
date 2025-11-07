@@ -31,6 +31,13 @@ export class CreateProgramaDto {
   readonly descripcion: string;
 
   @ApiProperty()
+  @IsString({ message: 'El campo areaConocimiento debe ser de tipo cadena' })
+  @MaxLength(255, {
+    message: 'El campo areaConocimiento no debe ser mayor a 255 caracteres',
+  })
+  readonly areaConocimiento: 'Derecho' | 'Ingeniería' | 'Economía' | 'Salud';
+
+  @ApiProperty()
   @IsDefined({ message: 'El campo version debe estar definido' })
   @IsInt({ message: 'El campo version debe ser de tipo numérico' })
   readonly version: number;

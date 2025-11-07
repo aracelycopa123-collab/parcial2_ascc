@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ProgramasService } from './programas.service';
 import { CreateProgramaDto } from './dto/create-programa.dto';

@@ -1,5 +1,5 @@
-// import { ProgramaEstado } from 'src/common/enums/programa-estado.enum';
-import { NivelAcademico } from 'src/niveles-academicos/entities/nivel-academico.entity';
+// import { ProgramaEstado } from '../../common/enums/programa-estado.enum';
+import { NivelAcademico } from '../../niveles-academicos/entities/nivel-academico.entity';
 import {
   Column,
   CreateDateColumn,
@@ -27,6 +27,9 @@ export class Programa {
 
   @Column('integer')
   version: number;
+
+  @Column('varchar', { length: 255, nullable: true })
+  areaConocimiento: 'Derecho' | 'Ingeniería' | 'Economía' | 'Salud';
 
   @Column('integer', { name: 'duracion_meses' })
   duracionMeses: number;

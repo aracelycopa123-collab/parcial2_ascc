@@ -1,4 +1,4 @@
-import { Programa } from 'src/programas/entities/programa.entity';
+import { Programa } from '../../programas/entities/programa.entity';
 import {
   Column,
   CreateDateColumn,
